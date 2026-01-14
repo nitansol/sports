@@ -10,6 +10,7 @@
 
   <style>
     html, body { height: 100%; }
+
     body{
       margin:0;
       background:#121212;
@@ -19,14 +20,60 @@
       padding:16px;
       box-sizing:border-box;
       font-family: Arial, sans-serif;
+      color:#d9d9d9;
     }
-    .wrap{ width:100%; max-width:1100px; }
-    .video-js{ width:100% !important; border-radius:14px; overflow:hidden; }
+
+    .wrap{
+      width:100%;
+      max-width:1100px;
+    }
+
+    /* BIG responsive player */
+    .video-js{
+      width:100% !important;
+      border-radius:14px;
+      overflow:hidden;
+      box-shadow: 0 14px 50px rgba(0,0,0,.45);
+    }
     .vjs-16-9{ padding-top:56.25%; }
-    .video-js .vjs-control-bar{ background: rgba(0,0,0,0.65); }
-    .video-js .vjs-big-play-button{ background: rgba(0,0,0,0.55); border:0; }
+
+    /* Dark control bar */
+    .video-js .vjs-control-bar{
+      background: rgba(0,0,0,0.65);
+    }
+    .video-js .vjs-big-play-button{
+      background: rgba(0,0,0,0.55);
+      border:0;
+    }
+
+    /* Force control bar to ALWAYS be visible (no fade-out) */
+    .video-js .vjs-control-bar,
+    .video-js.vjs-user-inactive .vjs-control-bar,
+    .video-js .vjs-control-bar.vjs-fade-out{
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: none !important;
+      transition: none !important;
+    }
+
+    /* Yellow headphone button */
     .video-js .vjs-lang-button{ width:3.2em; }
     .video-js .vjs-lang-button svg{ width:18px; height:18px; fill:#ffd400; }
+
+    /* Notice under player (faithtube-like) */
+    .notice{
+      margin-top: 10px;
+      text-align:center;
+      font-size: 14px;
+      line-height: 1.4;
+      opacity: 0.95;
+    }
+    .notice .yellow{ color:#ffd400; font-weight:700; }
+    .notice .sub{
+      margin-top: 6px;
+      font-size: 12px;
+      opacity: 0.7;
+    }
   </style>
 </head>
 
@@ -42,6 +89,11 @@
     >
       <source src="https://footballmultilin.s3.us-west-2.amazonaws.com/main.m3u8" type="application/x-mpegURL" />
     </video>
+
+    <div class="notice">
+      Tap <span class="yellow">Yellow headphone</span> icon to change language
+      <div class="sub">Demo only – Live translators can be added</div>
+    </div>
   </div>
 
   <!-- Video.js loader with fallback -->
@@ -60,7 +112,7 @@
         return;
       }
 
-      // --- Yellow headphone language button ---
+      // ----- Yellow headphone language button (Audio Track switcher) -----
       (function(videojs){
         const MenuButton = videojs.getComponent('MenuButton');
         const MenuItem   = videojs.getComponent('MenuItem');
@@ -74,15 +126,31 @@
             if (tracks) tracks.addEventListener('change', () => this.update());
             this.update();
           }
+
           handleClick(){
             super.handleClick();
-            const tracks = this.player().audioTracks && this.player().audioTracks();
+
+            const player = this.player();
+            const tracks = player.audioTracks && player.audioTracks();
             if (!tracks) return;
+
+            // Enable only the selected track
             for (let i=0;i<tracks.length;i++){
               tracks[i].enabled = (tracks[i] === this.track_);
             }
+
+            // Auto-close the menu after a few seconds
+            setTimeout(() => {
+              const btn = player.controlBar && player.controlBar.getChild('LangMenuButton');
+              if (btn && typeof btn.unpressButton === 'function') {
+                btn.unpressButton(); // closes menu
+              }
+            }, 2500);
           }
-          update(){ this.selected(!!(this.track_ && this.track_.enabled)); }
+
+          update(){
+            this.selected(!!(this.track_ && this.track_.enabled));
+          }
         }
 
         class LangMenuButton extends MenuButton {
@@ -104,18 +172,19 @@
           }
 
           createItems(){
-            const tracks = this.player().audioTracks && this.player().audioTracks();
+            const player = this.player();
+            const tracks = player.audioTracks && player.audioTracks();
             const items = [];
 
             if (!tracks || tracks.length === 0){
-              items.push(new MenuItem(this.player(), { label:'No alternate audio tracks', selectable:false }));
+              items.push(new MenuItem(player, { label:'No alternate audio tracks', selectable:false }));
               return items;
             }
 
             for (let i=0;i<tracks.length;i++){
               const t = tracks[i];
               const label = t.label || t.language || `Audio ${i+1}`;
-              items.push(new LangMenuItem(this.player(), { label, selectable:true, track:t }));
+              items.push(new LangMenuItem(player, { label, selectable:true, track:t }));
             }
             return items;
           }
@@ -132,13 +201,17 @@
         videojs.registerComponent('LangMenuButton', LangMenuButton);
       })(window.videojs);
 
-      // --- Player init ---
+      // ----- Player init -----
       const player = window.videojs('my-video', {
         controls: true,
         fluid: true,
         autoplay: false,
         preload: 'auto',
-        playbackRates: [0.5, 1, 1.25, 1.5, 2],
+
+        // ✅ Keep control bar visible
+        inactivityTimeout: 0,
+
+        // ✅ Remove playback rate entirely (no menu button + no rates)
         controlBar: {
           children: [
             'playToggle',
@@ -149,10 +222,10 @@
             'progressControl',
             'liveDisplay',
             'LangMenuButton',
-            'playbackRateMenuButton',
             'fullscreenToggle'
           ]
         },
+
         html5: { vhs: { overrideNative: false } }
       });
 
