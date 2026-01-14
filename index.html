@@ -1,86 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Custom Video.js Player Demo</title>
+  <meta charset="UTF-8" />
+  <title>Video.js HLS Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Video.js CSS -->
-  <link href="https://vjs.zencdn.net/8.23.1/video-js.css" rel="stylesheet" />
+  <link
+    href="https://vjs.zencdn.net/8.23.1/video-js.css"
+    rel="stylesheet"
+  />
 
   <style>
     body {
-      background-color: #121212;
+      margin: 0;
+      background: #000;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      margin: 0;
-      font-family: Arial, sans-serif;
     }
-
     .video-container {
-      width: 80%;
+      width: 90%;
       max-width: 900px;
-    }
-
-    /* Optional: replicate the dark theme and control colors */
-    .video-js .vjs-control-bar,
-    .video-js .vjs-big-play-button {
-      background-color: rgba(0, 0, 0, 0.6);
     }
   </style>
 </head>
 <body>
 
-  <div class="video-container">
-    <!-- Video.js Player -->
-    <video
-      id="my-video"
-      class="video-js vjs-big-play-centered vjs-fluid"
-      controls
-      autoplay
-      preload="auto"
-      data-setup='{"techOrder": ["html5"], "fluid": true}'
-      width="900"
-      height="500"
-      poster=""
-    >
-      <source src="https://footballmultilin.s3.us-west-2.amazonaws.com/main.m3u8" type="application/x-mpegURL" />
-      <p class="vjs-no-js">
-        To view this video please enable JavaScript and consider upgrading to a web browser that
-        supports HTML5 video.
-      </p>
-    </video>
-  </div>
+<div class="video-container">
+  <video
+    id="my-video"
+    class="video-js vjs-default-skin vjs-big-play-centered"
+    controls
+    preload="auto"
+    autoplay
+    playsinline
+    data-setup='{}'
+  >
+    <source
+      src="https://footballmultilin.s3.us-west-2.amazonaws.com/main.m3u8"
+      type="application/vnd.apple.mpegurl"
+    />
+  </video>
+</div>
 
-  <!-- Video.js JS -->
-  <script src="https://vjs.zencdn.net/8.23.1/video.min.js"></script>
+<!-- Video.js -->
+<script src="https://vjs.zencdn.net/8.23.1/video.min.js"></script>
 
-  <script>
-    const player = videojs('my-video', {
-      autoplay: true,
-      controls: true,
-      fluid: true,
-      techOrder: ['html5']
-    });
-
-    // Replicate exact control layout
-    player.ready(() => {
-      // Enable captions, audio track, playback rate
-      player.enableTech();
-
-      // Add playback rate menu
-      player.playbackRates([0.5, 1, 1.25, 1.5, 2]);
-
-      // Optional: show title bar and poster
-      player.addChild('TitleBar', {title: 'Demo Video', description: 'Football Live Stream'});
-
-      // Event logging (optional)
-      player.on('play', () => console.log('Video playing'));
-      player.on('pause', () => console.log('Video paused'));
-    });
-  </script>
+<script>
+  const player = videojs('my-video', {
+    autoplay: true,
+    controls: true,
+    fluid: true,
+    html5: {
+      vhs: {
+        overrideNative: true
+      },
+      nativeAudioTracks: false,
+      nativeVideoTracks: false
+    }
+  });
+</script>
 
 </body>
 </html>
