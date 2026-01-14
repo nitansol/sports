@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Multi-Language Video.js Player</title>
 
-  <link href="https://vjs.zencdn.net/8.23.1/video-js.css" rel="stylesheet"/>
+  <!-- Video.js CSS (cdnjs) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/video.js/8.23.1/video-js.min.css">
 
   <style>
     html, body { height: 100%; }
@@ -20,12 +21,8 @@
       font-family: Arial, sans-serif;
     }
     .wrap{ width:100%; max-width:1100px; }
-    .video-js{
-      width:100% !important;
-      border-radius:14px;
-      overflow:hidden;
-    }
-    .vjs-16-9 { padding-top:56.25%; }
+    .video-js{ width:100% !important; border-radius:14px; overflow:hidden; }
+    .vjs-16-9{ padding-top:56.25%; }
     .video-js .vjs-control-bar{ background: rgba(0,0,0,0.65); }
     .video-js .vjs-big-play-button{ background: rgba(0,0,0,0.55); border:0; }
     .video-js .vjs-lang-button{ width:3.2em; }
@@ -47,18 +44,23 @@
     </video>
   </div>
 
-  <!-- Load Video.js FIRST (no defer) -->
-  <script src="https://vjs.zencdn.net/8.23.1/video.min.js"></script>
-
-  <!-- Run everything AFTER Video.js is available -->
+  <!-- Video.js loader with fallback -->
   <script>
-    (function initWhenReady(){
+    function loadScript(src, onload) {
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = onload;
+      s.onerror = () => console.warn("Failed to load:", src);
+      document.head.appendChild(s);
+    }
+
+    function boot() {
       if (!window.videojs) {
-        console.error("Video.js failed to load. Check Network tab for video.min.js (blocked/404).");
+        console.error("Video.js still not available after trying CDNs.");
         return;
       }
 
-      // ----- Yellow Headphone Language Button (Audio Track switcher) -----
+      // --- Yellow headphone language button ---
       (function(videojs){
         const MenuButton = videojs.getComponent('MenuButton');
         const MenuItem   = videojs.getComponent('MenuItem');
@@ -130,11 +132,11 @@
         videojs.registerComponent('LangMenuButton', LangMenuButton);
       })(window.videojs);
 
-      // ----- Player init -----
+      // --- Player init ---
       const player = window.videojs('my-video', {
         controls: true,
         fluid: true,
-        autoplay: false, // safer; browsers block autoplay with sound
+        autoplay: false,
         preload: 'auto',
         playbackRates: [0.5, 1, 1.25, 1.5, 2],
         controlBar: {
@@ -155,7 +157,12 @@
       });
 
       player.on('error', () => console.log('Video.js error:', player.error()));
-    })();
+    }
+
+    loadScript("https://cdnjs.cloudflare.com/ajax/libs/video.js/8.23.1/video.min.js", () => {
+      if (window.videojs) return boot();
+      loadScript("https://cdn.jsdelivr.net/npm/video.js@8.23.1/dist/video.min.js", boot);
+    });
   </script>
 </body>
 </html>
