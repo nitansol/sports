@@ -12,45 +12,24 @@
     body{
       margin:0;
       background:#121212;
-      color:#d9d9d9;
-      font-family: Arial, sans-serif;
       display:flex;
       align-items:center;
       justify-content:center;
       padding:16px;
       box-sizing:border-box;
+      font-family: Arial, sans-serif;
     }
-
-    .wrap{
-      width: 100%;
-      max-width: 1100px;          /* bigger */
-    }
-
-    /* make player BIG + responsive */
+    .wrap{ width:100%; max-width:1100px; }
     .video-js{
-      width: 100% !important;
-      border-radius: 14px;
-      overflow: hidden;
-      box-shadow: 0 14px 50px rgba(0,0,0,.45);
+      width:100% !important;
+      border-radius:14px;
+      overflow:hidden;
     }
-
-    /* keep a clean 16:9 box */
-    .vjs-16-9 { padding-top: 56.25%; }
-
-    /* dark control bar */
+    .vjs-16-9 { padding-top:56.25%; }
     .video-js .vjs-control-bar{ background: rgba(0,0,0,0.65); }
     .video-js .vjs-big-play-button{ background: rgba(0,0,0,0.55); border:0; }
-
-    /* Yellow headphone button */
     .video-js .vjs-lang-button{ width:3.2em; }
     .video-js .vjs-lang-button svg{ width:18px; height:18px; fill:#ffd400; }
-
-    .hint{
-      text-align:center;
-      margin-top:10px;
-      font-size:14px;
-    }
-    .hint b{ color:#ffd400; }
   </style>
 </head>
 
@@ -58,7 +37,7 @@
   <div class="wrap">
     <video
       id="my-video"
-      class="video-js vjs-default-skin vjs-big-play-centered vjs-fluid vjs-16-9"
+      class="video-js vjs-big-play-centered vjs-fluid vjs-16-9"
       controls
       preload="auto"
       playsinline
@@ -66,117 +45,117 @@
     >
       <source src="https://footballmultilin.s3.us-west-2.amazonaws.com/main.m3u8" type="application/x-mpegURL" />
     </video>
-
-    <div class="hint">Tap the <b>yellow headphone</b> icon to change Language.</div>
   </div>
 
+  <!-- Load Video.js FIRST (no defer) -->
   <script src="https://vjs.zencdn.net/8.23.1/video.min.js"></script>
 
+  <!-- Run everything AFTER Video.js is available -->
   <script>
-    // ----- Yellow Headphone Language Button (Audio Track switcher) -----
-    (function(videojs){
-      const MenuButton = videojs.getComponent('MenuButton');
-      const MenuItem   = videojs.getComponent('MenuItem');
-
-      class LangMenuItem extends MenuItem {
-        constructor(player, options){
-          super(player, options);
-          this.track_ = options.track;
-
-          const tracks = player.audioTracks && player.audioTracks();
-          if (tracks) tracks.addEventListener('change', () => this.update());
-          this.update();
-        }
-
-        handleClick(){
-          super.handleClick();
-          const player = this.player();
-          const tracks = player.audioTracks && player.audioTracks();
-          if (!tracks) return;
-
-          for (let i=0;i<tracks.length;i++){
-            tracks[i].enabled = (tracks[i] === this.track_);
-          }
-        }
-
-        update(){
-          this.selected(!!(this.track_ && this.track_.enabled));
-        }
+    (function initWhenReady(){
+      if (!window.videojs) {
+        console.error("Video.js failed to load. Check Network tab for video.min.js (blocked/404).");
+        return;
       }
 
-      class LangMenuButton extends MenuButton {
-        constructor(player, options){
-          super(player, options);
-          this.controlText('Language');
-          this.el().classList.add('vjs-lang-button');
+      // ----- Yellow Headphone Language Button (Audio Track switcher) -----
+      (function(videojs){
+        const MenuButton = videojs.getComponent('MenuButton');
+        const MenuItem   = videojs.getComponent('MenuItem');
 
-          const ph = this.el().querySelector('.vjs-icon-placeholder');
-          if (ph){
-            ph.innerHTML = `
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 3a9 9 0 0 0-9 9v6a3 3 0 0 0 3 3h2v-8H6a6 6 0 0 1 12 0h-2v8h2a3 3 0 0 0 3-3v-6a9 9 0 0 0-9-9zm-6 18a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h1v8H6zm12 0h-1v-8h1a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1z"/>
-              </svg>`;
+        class LangMenuItem extends MenuItem {
+          constructor(player, options){
+            super(player, options);
+            this.track_ = options.track;
+
+            const tracks = player.audioTracks && player.audioTracks();
+            if (tracks) tracks.addEventListener('change', () => this.update());
+            this.update();
           }
-
-          this.on(player, 'loadedmetadata', () => this.refreshMenu_());
-          this.on(player, 'loadstart',      () => this.refreshMenu_());
+          handleClick(){
+            super.handleClick();
+            const tracks = this.player().audioTracks && this.player().audioTracks();
+            if (!tracks) return;
+            for (let i=0;i<tracks.length;i++){
+              tracks[i].enabled = (tracks[i] === this.track_);
+            }
+          }
+          update(){ this.selected(!!(this.track_ && this.track_.enabled)); }
         }
 
-        createItems(){
-          const player = this.player();
-          const tracks = player.audioTracks && player.audioTracks();
-          const items = [];
+        class LangMenuButton extends MenuButton {
+          constructor(player, options){
+            super(player, options);
+            this.controlText('Language');
+            this.el().classList.add('vjs-lang-button');
 
-          if (!tracks || tracks.length === 0){
-            items.push(new MenuItem(player, { label:'No alternate audio tracks', selectable:false }));
+            const ph = this.el().querySelector('.vjs-icon-placeholder');
+            if (ph){
+              ph.innerHTML = `
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 3a9 9 0 0 0-9 9v6a3 3 0 0 0 3 3h2v-8H6a6 6 0 0 1 12 0h-2v8h2a3 3 0 0 0 3-3v-6a9 9 0 0 0-9-9zm-6 18a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h1v8H6zm12 0h-1v-8h1a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1z"/>
+                </svg>`;
+            }
+
+            this.on(player, 'loadedmetadata', () => this.refreshMenu_());
+            this.on(player, 'loadstart',      () => this.refreshMenu_());
+          }
+
+          createItems(){
+            const tracks = this.player().audioTracks && this.player().audioTracks();
+            const items = [];
+
+            if (!tracks || tracks.length === 0){
+              items.push(new MenuItem(this.player(), { label:'No alternate audio tracks', selectable:false }));
+              return items;
+            }
+
+            for (let i=0;i<tracks.length;i++){
+              const t = tracks[i];
+              const label = t.label || t.language || `Audio ${i+1}`;
+              items.push(new LangMenuItem(this.player(), { label, selectable:true, track:t }));
+            }
             return items;
           }
 
-          for (let i=0;i<tracks.length;i++){
-            const t = tracks[i];
-            const label = t.label || t.language || `Audio ${i+1}`;
-            items.push(new LangMenuItem(player, { label, selectable:true, track:t }));
-          }
-          return items;
-        }
-
-        refreshMenu_(){
-          if (this.menu){
-            this.menu.dispose();
-            this.menu = this.createMenu();
-            this.addChild(this.menu);
+          refreshMenu_(){
+            if (this.menu){
+              this.menu.dispose();
+              this.menu = this.createMenu();
+              this.addChild(this.menu);
+            }
           }
         }
-      }
 
-      videojs.registerComponent('LangMenuButton', LangMenuButton);
-    })(window.videojs);
+        videojs.registerComponent('LangMenuButton', LangMenuButton);
+      })(window.videojs);
 
-    // ----- Player init -----
-    const player = videojs('my-video', {
-      controls: true,
-      fluid: true,
-      autoplay: false,   // start safe; user taps play
-      preload: 'auto',
-      playbackRates: [0.5, 1, 1.25, 1.5, 2],
-      controlBar: {
-        children: [
-          'playToggle',
-          'volumePanel',
-          'currentTimeDisplay',
-          'timeDivider',
-          'durationDisplay',
-          'progressControl',
-          'liveDisplay',
-          'LangMenuButton',
-          'playbackRateMenuButton',
-          'fullscreenToggle'
-        ]
-      },
-      html5: { vhs: { overrideNative: false } }
-    });
+      // ----- Player init -----
+      const player = window.videojs('my-video', {
+        controls: true,
+        fluid: true,
+        autoplay: false, // safer; browsers block autoplay with sound
+        preload: 'auto',
+        playbackRates: [0.5, 1, 1.25, 1.5, 2],
+        controlBar: {
+          children: [
+            'playToggle',
+            'volumePanel',
+            'currentTimeDisplay',
+            'timeDivider',
+            'durationDisplay',
+            'progressControl',
+            'liveDisplay',
+            'LangMenuButton',
+            'playbackRateMenuButton',
+            'fullscreenToggle'
+          ]
+        },
+        html5: { vhs: { overrideNative: false } }
+      });
 
-    player.on('error', () => console.log('Video.js error:', player.error()));
+      player.on('error', () => console.log('Video.js error:', player.error()));
+    })();
   </script>
 </body>
 </html>
