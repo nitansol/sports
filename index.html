@@ -56,6 +56,11 @@
       transition: none !important;
     }
 
+     /* Capitalize the first letter of the language text */
+        .vjs-menu-item .vjs-menu-item-text {
+            text-transform: capitalize;
+        }
+
     /* Yellow headphone button */
     .video-js .vjs-lang-button{ width:3.2em; }
     .video-js .vjs-lang-button svg{ width:18px; height:18px; fill:#ffd400; }
@@ -83,6 +88,7 @@
       id="my-video"
       class="video-js vjs-big-play-centered vjs-fluid vjs-16-9"
       controls
+      autoplay
       preload="auto"
       playsinline
       crossorigin="anonymous"
@@ -92,7 +98,7 @@
 
     <div class="notice">
       Tap <span class="yellow">Yellow headphone</span> icon to change language
-      <div class="sub">Demo only – Live translators can be added</div>
+      
     </div>
   </div>
 
