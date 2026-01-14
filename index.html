@@ -208,32 +208,37 @@
       })(window.videojs);
 
       // ----- Player init -----
-      const player = window.videojs('my-video', {
-        controls: true,
-        fluid: true,
-        autoplay: false,
-        preload: 'auto',
+const player = window.videojs('my-video', {
+  controls: true,
+  fluid: true,
+  autoplay: false,
+  preload: 'auto',
 
-        // ✅ Keep control bar visible
-        inactivityTimeout: 0,
+  // Always show control bar
+  inactivityTimeout: 0,
 
-        // ✅ Remove playback rate entirely (no menu button + no rates)
-        controlBar: {
-          children: [
-            'playToggle',
-            'volumePanel',
-            'currentTimeDisplay',
-            'timeDivider',
-            'durationDisplay',
-            'progressControl',
-            'liveDisplay',
-            'LangMenuButton',
-            'fullscreenToggle'
-          ]
-        },
+  controlBar: {
+    children: [
+      'playToggle',
+      'volumePanel',
+      'currentTimeDisplay',
+      'timeDivider',
+      'durationDisplay',
+      'progressControl',
+      'liveDisplay',
+      'LangMenuButton',
+      'fullscreenToggle'
+    ]
+  },
 
-        html5: { vhs: { overrideNative: false } }
-      });
+  // 🔥 IMPORTANT: makes audio track discovery consistent in Chrome/Android
+  html5: {
+    vhs: {
+      overrideNative: true
+    }
+  }
+});
+
 
       player.on('error', () => console.log('Video.js error:', player.error()));
     }
