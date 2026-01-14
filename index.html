@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Custom Video.js Player Demo</title>
 
   <!-- Video.js CSS -->
@@ -14,17 +14,23 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      min-height: 100vh;
       margin: 0;
       font-family: Arial, sans-serif;
+      padding: 16px;
+      box-sizing: border-box;
     }
 
     .video-container {
-      width: 80%;
-      max-width: 900px;
+      width: min(900px, 100%);
     }
 
-    /* Optional: replicate the dark theme and control colors */
+    .video-js {
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    /* Dark theme feel */
     .video-js .vjs-control-bar,
     .video-js .vjs-big-play-button {
       background-color: rgba(0, 0, 0, 0.6);
@@ -34,22 +40,17 @@
 <body>
 
   <div class="video-container">
-    <!-- Video.js Player -->
     <video
       id="my-video"
       class="video-js vjs-big-play-centered vjs-fluid"
       controls
-      autoplay
       preload="auto"
-      data-setup='{"techOrder": ["html5"], "fluid": true}'
-      width="900"
-      height="500"
-      poster=""
+      playsinline
+      muted
     >
       <source src="https://footballmultilin.s3.us-west-2.amazonaws.com/main.m3u8" type="application/x-mpegURL" />
       <p class="vjs-no-js">
-        To view this video please enable JavaScript and consider upgrading to a web browser that
-        supports HTML5 video.
+        To view this video please enable JavaScript and consider upgrading to a web browser that supports HTML5 video.
       </p>
     </video>
   </div>
@@ -59,26 +60,29 @@
 
   <script>
     const player = videojs('my-video', {
-      autoplay: true,
       controls: true,
       fluid: true,
-      techOrder: ['html5']
+      autoplay: true,     // may be blocked unless muted
+      muted: true,        // helps autoplay work in Chrome/Safari
+      playbackRates: [0.5, 1, 1.25, 1.5, 2],
+      html5: {
+        vhs: {
+          // Helps some live HLS streams behave better
+          // (safe to remove if you don't need it)
+          overrideNative: false
+        }
+      }
     });
 
-    // Replicate exact control layout
-    player.ready(() => {
-      // Enable captions, audio track, playback rate
-      player.enableTech();
+    player.ready(function () {
+      // Try autoplay; if blocked, user must click play
+      player.play().catch(() => {
+        console.log('Autoplay blocked by browser (expected on many devices).');
+      });
 
-      // Add playback rate menu
-      player.playbackRates([0.5, 1, 1.25, 1.5, 2]);
-
-      // Optional: show title bar and poster
-      player.addChild('TitleBar', {title: 'Demo Video', description: 'Football Live Stream'});
-
-      // Event logging (optional)
       player.on('play', () => console.log('Video playing'));
       player.on('pause', () => console.log('Video paused'));
+      player.on('error', () => console.log('Video.js error:', player.error()));
     });
   </script>
 
