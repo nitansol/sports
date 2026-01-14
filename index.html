@@ -3,43 +3,81 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Custom Video.js Player Demo</title>
+  <title>Video.js Multilanguage Player</title>
 
-  <!-- Video.js CSS -->
   <link href="https://vjs.zencdn.net/8.23.1/video-js.css" rel="stylesheet" />
 
   <style>
-    body {
-      background-color: #121212;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
+    body{
+      margin:0;
+      min-height:100vh;
+      background:#121212;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+      box-sizing:border-box;
       font-family: Arial, sans-serif;
-      padding: 16px;
-      box-sizing: border-box;
+    }
+    .wrap{
+      width:min(980px, 100%);
     }
 
-    .video-container {
-      width: min(900px, 100%);
+    .video-js{
+      border-radius:12px;
+      overflow:hidden;
+      box-shadow: 0 12px 40px rgba(0,0,0,.35);
     }
 
-    .video-js {
-      border-radius: 10px;
-      overflow: hidden;
+    /* Dark-ish control bar */
+    .video-js .vjs-control-bar{
+      background: rgba(0,0,0,0.65);
+    }
+    .video-js .vjs-big-play-button{
+      background: rgba(0,0,0,0.55);
+      border: 0;
     }
 
-    /* Dark theme feel */
-    .video-js .vjs-control-bar,
-    .video-js .vjs-big-play-button {
-      background-color: rgba(0, 0, 0, 0.6);
+    /* Yellow headphone button styling */
+    .video-js .vjs-lang-button .vjs-icon-placeholder{
+      display:flex;
+      align-items:center;
+      justify-content:center;
     }
+    .video-js .vjs-lang-button{
+      width: 3.2em;
+    }
+    .video-js .vjs-lang-button:hover{
+      filter: brightness(1.05);
+    }
+    .video-js .vjs-lang-button svg{
+      width: 18px;
+      height: 18px;
+      fill: #ffd400; /* yellow */
+    }
+
+    /* Menu styling */
+    .video-js .vjs-menu{
+      border-radius:10px;
+      overflow:hidden;
+    }
+    .video-js .vjs-menu-content{
+      max-height: 240px;
+    }
+
+    /* Optional helper text */
+    .hint{
+      color:#cfcfcf;
+      font-size: 14px;
+      margin-top: 10px;
+      text-align:center;
+    }
+    .hint b{ color:#ffd400; }
   </style>
 </head>
-<body>
 
-  <div class="video-container">
+<body>
+  <div class="wrap">
     <video
       id="my-video"
       class="video-js vjs-big-play-centered vjs-fluid"
@@ -48,43 +86,162 @@
       playsinline
       muted
     >
-      <source src="https://footballmultilin.s3.us-west-2.amazonaws.com/main.m3u8" type="application/x-mpegURL" />
-      <p class="vjs-no-js">
-        To view this video please enable JavaScript and consider upgrading to a web browser that supports HTML5 video.
-      </p>
+      <source
+        src="https://footballmultilin.s3.us-west-2.amazonaws.com/main.m3u8"
+        type="application/x-mpegURL"
+      />
     </video>
+
+    <div class="hint">Tap the <b>yellow headphone</b> icon to change language.</div>
   </div>
 
-  <!-- Video.js JS -->
   <script src="https://vjs.zencdn.net/8.23.1/video.min.js"></script>
 
   <script>
+    // ---------- Custom "Language" Menu Button (Yellow Headphone) ----------
+    (function (videojs) {
+      const MenuButton = videojs.getComponent('MenuButton');
+      const MenuItem = videojs.getComponent('MenuItem');
+
+      function pickLabel(track, index) {
+        // Prefer label, fallback to language code, fallback to Audio #n
+        return (track && (track.label || track.language)) || `Audio ${index + 1}`;
+      }
+
+      class LangMenuItem extends MenuItem {
+        constructor(player, options) {
+          super(player, options);
+          this.track_ = options.track;
+          this.index_ = options.index;
+
+          this.on(player, 'loadedmetadata', this.update.bind(this));
+          const tracks = player.audioTracks && player.audioTracks();
+          if (tracks) {
+            tracks.addEventListener('change', this.update.bind(this));
+          }
+          this.update();
+        }
+
+        handleClick() {
+          super.handleClick();
+
+          const player = this.player();
+          const tracks = player.audioTracks && player.audioTracks();
+          if (!tracks) return;
+
+          // Enable only the selected track
+          for (let i = 0; i < tracks.length; i++) {
+            tracks[i].enabled = (tracks[i] === this.track_);
+          }
+        }
+
+        update() {
+          const player = this.player();
+          const tracks = player.audioTracks && player.audioTracks();
+          if (!tracks) return;
+
+          this.selected(this.track_ && this.track_.enabled === true);
+        }
+      }
+
+      class LangMenuButton extends MenuButton {
+        constructor(player, options) {
+          super(player, options);
+          this.controlText('Language');
+
+          // Insert headphone SVG icon
+          this.el().classList.add('vjs-lang-button');
+          const placeholder = this.el().querySelector('.vjs-icon-placeholder');
+          if (placeholder) {
+            placeholder.innerHTML = `
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 3a9 9 0 0 0-9 9v6a3 3 0 0 0 3 3h2v-8H6a6 6 0 0 1 12 0h-2v8h2a3 3 0 0 0 3-3v-6a9 9 0 0 0-9-9zm-6 18a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h1v8H6zm12 0h-1v-8h1a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1z"/>
+              </svg>
+            `;
+          }
+
+          // Update menu when tracks appear/change
+          this.on(player, 'loadedmetadata', () => this.update());
+          this.on(player, 'loadstart', () => this.update());
+        }
+
+        createItems() {
+          const player = this.player();
+          const tracks = player.audioTracks && player.audioTracks();
+          const items = [];
+
+          if (!tracks || tracks.length === 0) {
+            // No alternate audio tracks found
+            items.push(new MenuItem(player, {
+              label: 'No alternate audio tracks',
+              selectable: false
+            }));
+            return items;
+          }
+
+          for (let i = 0; i < tracks.length; i++) {
+            const t = tracks[i];
+            items.push(new LangMenuItem(player, {
+              label: pickLabel(t, i),
+              selectable: true,
+              track: t,
+              index: i
+            }));
+          }
+          return items;
+        }
+
+        // Rebuild menu when needed
+        update() {
+          // Force menu refresh
+          if (this.menu) {
+            this.menu.dispose();
+            this.menu = this.createMenu();
+            this.addChild(this.menu);
+          }
+        }
+      }
+
+      videojs.registerComponent('LangMenuButton', LangMenuButton);
+    })(window.videojs);
+
+    // ---------- Player init ----------
     const player = videojs('my-video', {
       controls: true,
       fluid: true,
       autoplay: true,     // may be blocked unless muted
-      muted: true,        // helps autoplay work in Chrome/Safari
+      muted: true,        // helps autoplay on Chrome/Safari
+      preload: 'auto',
       playbackRates: [0.5, 1, 1.25, 1.5, 2],
+      controlBar: {
+        children: [
+          'playToggle',
+          'volumePanel',
+          'currentTimeDisplay',
+          'timeDivider',
+          'durationDisplay',
+          'progressControl',
+          'liveDisplay',         // shows LIVE when stream is live
+          'LangMenuButton',      // yellow headphone
+          'playbackRateMenuButton',
+          'fullscreenToggle'
+        ]
+      },
       html5: {
         vhs: {
-          // Helps some live HLS streams behave better
-          // (safe to remove if you don't need it)
+          // Keep native HLS where possible (generally best on Safari)
           overrideNative: false
         }
       }
     });
 
-    player.ready(function () {
-      // Try autoplay; if blocked, user must click play
+    player.ready(() => {
       player.play().catch(() => {
-        console.log('Autoplay blocked by browser (expected on many devices).');
+        console.log('Autoplay blocked (normal). User must press play.');
       });
 
-      player.on('play', () => console.log('Video playing'));
-      player.on('pause', () => console.log('Video paused'));
       player.on('error', () => console.log('Video.js error:', player.error()));
     });
   </script>
-
 </body>
 </html>
