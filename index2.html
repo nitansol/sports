@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Lingual sports commentary - Live</title>
+    <meta name="robots" content="noindex, nofollow">
+
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet"/>
+
+    <style>
+
+/* Apply to entire page */
+body {
+    background-color: black;
+    color: white;
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+    padding: 5px;
+}
+
+/* Video container */
+.video-container {
+    max-width: 80%;
+    margin: auto;
+    padding: 5px;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+}
+
+/* For larger screens */
+@media screen and (min-width: 1024px) {
+    .video-container { max-width: 80%; }
+}
+
+/* For mobile devices */
+@media screen and (max-width: 1023px) {
+    .video-container { max-width: 100%; }
+}
+
+/* Disable picture in picture button */
+.video-js .vjs-picture-in-picture-control { display: none; }
+
+/* Hide built-in audio button — custom panel replaces it */
+#my-video .vjs-audio-button { display: none !important; }
+
+/* ── Ministry-style player ── */
+.video-js {
+    width: 100% !important;
+    aspect-ratio: 16/9;
+    height: auto !important;
+}
+
+.video-js .vjs-big-play-button {
+    background: rgba(255,255,255,0.07);
+    border: 1.5px solid rgba(255,255,255,0.55);
+    border-radius: 6px;
+    width: 52px; height: 52px;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    transition: background 0.2s, border-color 0.2s;
+}
+.video-js:hover .vjs-big-play-button {
+    background: rgba(255,255,255,0.14);
+    border-color: rgba(255,255,255,0.8);
+}
+.video-js .vjs-big-play-button .vjs-icon-placeholder::before {
+    font-size: 22px;
+    color: rgba(255,255,255,0.85);
+}
+.video-js .vjs-control-bar {
+    background: linear-gradient(transparent, rgba(0,0,0,0.85));
+    height: 44px;
+    padding: 0 8px;
+}
+.video-js .vjs-play-progress,
+.video-js .vjs-volume-level { background: #ffc713; }
+.video-js .vjs-slider { background: rgba(255,255,255,0.15); }
+
+/* Loading overlay */
+.loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: #141418;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    z-index: 10;
+    transition: opacity 0.5s;
+}
+.loading-overlay.hidden { opacity: 0; pointer-events: none; }
+
+.spinner {
+    width: 34px; height: 34px;
+    border: 2px solid rgba(255,199,19,0.2);
+    border-top-color: #ffc713;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-text {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #888078;
+    font-family: sans-serif;
+}
+
+.player-wrap {
+    width: 100%;
+    position: relative;
+}
+
+/* ── Audio language panel ── */
+.audio-panel {
+    width: 100%;
+    max-width: 100%;
+    margin-top: 16px;
+    background: #1a1a20;
+    border: 1px solid rgba(255,199,19,0.18);
+    border-radius: 4px;
+    padding: 20px 24px;
+    font-family: sans-serif;
+}
+
+.audio-panel-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #888078;
+    margin-bottom: 14px;
+}
+
+.audio-tracks {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.track-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 18px;
+    border-radius: 3px;
+    border: 1px solid rgba(255,199,19,0.18);
+    background: transparent;
+    color: #888078;
+    font-family: sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.18s;
+}
+.track-btn:hover  { border-color: #ffc713; color: #e8e4d8; }
+.track-btn.active {
+    background: rgba(255,199,19,0.12);
+    border-color: #ffc713;
+    color: #e8c97a;
+    font-weight: 500;
+}
+.track-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Status bar */
+.status-bar {
+    width: 100%;
+    max-width: 100%;
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #888078;
+    font-family: sans-serif;
+    padding: 0 2px;
+}
+
+#status-text.error { color: #e63946; }
+#status-text.ok    { color: #4caf7d; }
+#status-text.warn  { color: #f4a261; }
+
+    </style>
+</head>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-FJEX9GZRTX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-FJEX9GZRTX');
+</script>
+
+<body>
+    <h2 style="text-align: center;">Multi-Lingual sports commentary - Live</h2>
+    <br>
+
+    <div class="video-container">
+        <div class="player-wrap">
+            <div class="loading-overlay" id="loading-overlay">
+                <div class="spinner"></div>
+                <span class="loading-text" id="loading-text">Connecting to stream…</span>
+            </div>
+            <video id="my-video"
+                   class="video-js vjs-default-skin"
+                   controls preload="auto" playsinline>
+            </video>
+        </div>
+    </div>
+
+    <div class="video-container" style="flex-direction: column;">
+        <div class="audio-panel">
+            <div class="audio-panel-label">Audio Language</div>
+            <div class="audio-tracks" id="track-buttons">
+                <!-- Populated dynamically from EXT-X-MEDIA tracks -->
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <span id="status-text">Loading…</span>
+            <span id="track-info"></span>
+        </div>
+    </div>
+
+<script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+<script>
+
+var PLAYLIST_URL = 'https://footballmultilin.s3.us-west-2.amazonaws.com/main.m3u8';
+
+var LANG_META = {
+  'af': { flag: '🇿🇦', name: 'Afrikaans' },
+  'am': { flag: '🇪🇹', name: 'Amharic' },
+  'ar': { flag: '🇸🇦', name: 'Arabic' },
+  'az': { flag: '🇦🇿', name: 'Azerbaijani' },
+  'be': { flag: '🇧🇾', name: 'Belarusian' },
+  'bg': { flag: '🇧🇬', name: 'Bulgarian' },
+  'bn': { flag: '🇧🇩', name: 'Bengali' },
+  'cs': { flag: '🇨🇿', name: 'Czech' },
+  'da': { flag: '🇩🇰', name: 'Danish' },
+  'de': { flag: '🇩🇪', name: 'German' },
+  'el': { flag: '🇬🇷', name: 'Greek' },
+  'en': { flag: '🇬🇧', name: 'English' },
+  'es': { flag: '🇪🇸', name: 'Spanish' },
+  'et': { flag: '🇪🇪', name: 'Estonian' },
+  'fa': { flag: '🇮🇷', name: 'Persian' },
+  'fi': { flag: '🇫🇮', name: 'Finnish' },
+  'fr': { flag: '🇫🇷', name: 'French' },
+  'gu': { flag: '🇮🇳', name: 'Gujarati' },
+  'he': { flag: '🇮🇱', name: 'Hebrew' },
+  'hi': { flag: '🇮🇳', name: 'Hindi' },
+  'hr': { flag: '🇭🇷', name: 'Croatian' },
+  'hu': { flag: '🇭🇺', name: 'Hungarian' },
+  'hy': { flag: '🇦🇲', name: 'Armenian' },
+  'id': { flag: '🇮🇩', name: 'Indonesian' },
+  'it': { flag: '🇮🇹', name: 'Italian' },
+  'ja': { flag: '🇯🇵', name: 'Japanese' },
+  'ka': { flag: '🇬🇪', name: 'Georgian' },
+  'kn': { flag: '🇮🇳', name: 'Kannada' },
+  'ko': { flag: '🇰🇷', name: 'Korean' },
+  'lt': { flag: '🇱🇹', name: 'Lithuanian' },
+  'lv': { flag: '🇱🇻', name: 'Latvian' },
+  'mk': { flag: '🇲🇰', name: 'Macedonian' },
+  'ml': { flag: '🇮🇳', name: 'Malayalam' },
+  'mn': { flag: '🇲🇳', name: 'Mongolian' },
+  'mr': { flag: '🇮🇳', name: 'Marathi' },
+  'ms': { flag: '🇲🇾', name: 'Malay' },
+  'my': { flag: '🇲🇲', name: 'Burmese' },
+  'nb': { flag: '🇳🇴', name: 'Norwegian' },
+  'ne': { flag: '🇳🇵', name: 'Nepali' },
+  'nl': { flag: '🇳🇱', name: 'Dutch' },
+  'pa': { flag: '🇮🇳', name: 'Punjabi' },
+  'pl': { flag: '🇵🇱', name: 'Polish' },
+  'pt': { flag: '🇵🇹', name: 'Portuguese' },
+  'ro': { flag: '🇷🇴', name: 'Romanian' },
+  'ru': { flag: '🇷🇺', name: 'Russian' },
+  'si': { flag: '🇱🇰', name: 'Sinhala' },
+  'sk': { flag: '🇸🇰', name: 'Slovak' },
+  'sl': { flag: '🇸🇮', name: 'Slovenian' },
+  'sq': { flag: '🇦🇱', name: 'Albanian' },
+  'sr': { flag: '🇷🇸', name: 'Serbian' },
+  'sv': { flag: '🇸🇪', name: 'Swedish' },
+  'sw': { flag: '🇰🇪', name: 'Swahili' },
+  'ta': { flag: '🇮🇳', name: 'Tamil' },
+  'te': { flag: '🇮🇳', name: 'Telugu' },
+  'th': { flag: '🇹🇭', name: 'Thai' },
+  'tr': { flag: '🇹🇷', name: 'Turkish' },
+  'uk': { flag: '🇺🇦', name: 'Ukrainian' },
+  'ur': { flag: '🇵🇰', name: 'Urdu' },
+  'uz': { flag: '🇺🇿', name: 'Uzbek' },
+  'vi': { flag: '🇻🇳', name: 'Vietnamese' },
+  'zh': { flag: '🇨🇳', name: 'Chinese' },
+  'zu': { flag: '🇿🇦', name: 'Zulu' },
+};
+
+var FALLBACK_FLAG = '🔊';
+
+var statusEl    = document.getElementById('status-text');
+var trackInfoEl = document.getElementById('track-info');
+var trackBtnsEl = document.getElementById('track-buttons');
+var overlay     = document.getElementById('loading-overlay');
+var loadingText = document.getElementById('loading-text');
+var retryTimer  = null;
+var tracksReady = false;
+var activeLang  = null;
+
+function setStatus(msg, cls) {
+  statusEl.textContent = msg;
+  statusEl.className   = cls || '';
+}
+function hideLoading() { overlay.classList.add('hidden'); }
+function showLoading(msg) {
+  overlay.classList.remove('hidden');
+  loadingText.textContent = msg || 'Connecting…';
+}
+
+var player = videojs('my-video', {
+  fluid: true,
+  responsive: true,
+  liveui: true,
+  html5: {
+    vhs: {
+      overrideNative: true,
+      enableLowInitialPlaylist: true,
+      limitRenditionByPlayerDimensions: false,
+    },
+    nativeAudioTracks: false,
+    nativeVideoTracks: false,
+  },
+  controls: true,
+  autoplay: false,
+  preload: 'auto',
+  errorDisplay: false,
+});
+
+player.ready(function () {
+  showLoading('Connecting to stream…');
+  setStatus('Connecting…');
+  player.src({ src: PLAYLIST_URL, type: 'application/x-mpegURL' });
+  player.play().catch(function () {
+    hideLoading();
+    setStatus('Click play to start');
+  });
+});
+
+player.on('loadedmetadata', function () {
+  hideLoading();
+  setStatus('Live', 'ok');
+  initAudioTracks();
+});
+
+player.on('playing', function () {
+  hideLoading();
+  if (activeLang) {
+    var meta = getLangMeta(activeLang);
+    setStatus('Live — ' + meta.name, 'ok');
+  } else {
+    setStatus('Live', 'ok');
+  }
+});
+
+player.on('waiting', function () { setStatus('Buffering…'); });
+
+player.on('error', function () {
+  hideLoading();
+  setStatus('Stream unavailable — retrying in 5s…', 'error');
+  if (retryTimer) clearTimeout(retryTimer);
+  retryTimer = setTimeout(function () {
+    setStatus('Reconnecting…');
+    player.src({ src: PLAYLIST_URL, type: 'application/x-mpegURL' });
+    player.play().catch(function(){});
+  }, 5000);
+});
+
+function normaliseLang(code) {
+  if (!code) return '';
+  return code.split('-')[0].toLowerCase();
+}
+
+function getLangMeta(code) {
+  var key = normaliseLang(code);
+  if (LANG_META[key]) return LANG_META[key];
+  return { flag: FALLBACK_FLAG, name: code || 'Unknown' };
+}
+
+function initAudioTracks() {
+  var tracks = player.audioTracks();
+  if (!tracks || tracks.length === 0) {
+    setTimeout(initAudioTracks, 500);
+    return;
+  }
+  tracksReady = true;
+  trackBtnsEl.innerHTML = '';
+  var defaultLang = null;
+  var names = [];
+
+  for (var i = 0; i < tracks.length; i++) {
+    var track       = tracks[i];
+    var rawLabel    = track.label || '';
+    var lang        = normaliseLang(track.language);
+    var meta        = getLangMeta(lang || track.language);
+    var displayName = rawLabel || meta.name;
+    var flag        = meta.flag;
+    names.push(displayName);
+
+    (function(langCode, btnLabel, btnFlag) {
+      var btn = document.createElement('button');
+      btn.className    = 'track-btn';
+      btn.dataset.lang = langCode;
+      btn.textContent  = btnFlag + ' ' + btnLabel;
+      btn.onclick = function() { switchAudio(langCode); };
+      trackBtnsEl.appendChild(btn);
+    })(lang || track.language, displayName, flag);
+
+    if (track.enabled && !defaultLang) {
+      defaultLang = lang || track.language;
+    }
+  }
+
+  trackInfoEl.textContent = tracks.length + ' Language(s): ' + names.join(', ');
+
+  if (defaultLang) {
+    setActiveButton(defaultLang);
+    var defMeta = getLangMeta(defaultLang);
+    setStatus('Live — ' + defMeta.name, 'ok');
+    activeLang = defaultLang;
+  }
+}
+
+function setActiveButton(lang) {
+  activeLang = lang;
+  var buttons = trackBtnsEl.querySelectorAll('.track-btn');
+  for (var i = 0; i < buttons.length; i++) {
+    buttons[i].classList.toggle('active', buttons[i].dataset.lang === lang);
+  }
+}
+
+function switchAudio(targetLang) {
+  if (!tracksReady) { setStatus('Tracks not ready yet — please wait', 'warn'); return; }
+  var tracks = player.audioTracks();
+  if (!tracks || tracks.length === 0) { setStatus('No audio tracks available', 'error'); return; }
+  var found = false;
+  for (var i = 0; i < tracks.length; i++) {
+    var lang = normaliseLang(tracks[i].language) || tracks[i].language;
+    if (lang === targetLang) { tracks[i].enabled = true; found = true; }
+    else { tracks[i].enabled = false; }
+  }
+  if (found) {
+    setActiveButton(targetLang);
+    var meta = getLangMeta(targetLang);
+    setStatus('Live — ' + meta.name, 'ok');
+    trackInfoEl.textContent = 'Audio: ' + meta.flag + ' ' + meta.name;
+  } else {
+    setStatus('Track not found for: ' + targetLang, 'error');
+  }
+}
+
+</script>
+</body>
+</html>
