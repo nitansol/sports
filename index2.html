@@ -21,24 +21,18 @@ body {
     padding: 5px;
 }
 
-/* Video container */
-.video-container {
-    max-width: 80%;
+/* Shared wrapper — controls width for both player and audio panel */
+.stream-wrapper {
+    width: 100%;
+    max-width: 70%;
     margin: auto;
     padding: 5px;
     box-sizing: border-box;
-    display: flex;
-    justify-content: center;
-}
-
-/* For larger screens */
-@media screen and (min-width: 1024px) {
-    .video-container { max-width: 60%; }
 }
 
 /* For mobile devices */
 @media screen and (max-width: 1023px) {
-    .video-container { max-width: 100%; }
+    .stream-wrapper { max-width: 100%; }
 }
 
 /* Disable picture in picture button */
@@ -121,7 +115,6 @@ body {
 /* ── Audio language panel ── */
 .audio-panel {
     width: 100%;
-    max-width: 100%;
     margin-top: 16px;
     background: #1a1a20;
     border: 1px solid rgba(255,199,19,0.18);
@@ -171,7 +164,6 @@ body {
 /* Status bar */
 .status-bar {
     width: 100%;
-    max-width: 100%;
     margin-top: 10px;
     display: flex;
     justify-content: space-between;
@@ -201,7 +193,7 @@ body {
     <h2 style="text-align: center;">Multi-Lingual sports commentary - Live</h2>
     <br>
 
-    <div class="video-container">
+    <div class="stream-wrapper">
         <div class="player-wrap">
             <div class="loading-overlay" id="loading-overlay">
                 <div class="spinner"></div>
@@ -212,9 +204,7 @@ body {
                    controls preload="auto" playsinline>
             </video>
         </div>
-    </div>
 
-    <div class="video-container" style="flex-direction: column;">
         <div class="audio-panel">
             <div class="audio-panel-label">Audio Language</div>
             <div class="audio-tracks" id="track-buttons">
