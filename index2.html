@@ -21,18 +21,25 @@ body {
     padding: 5px;
 }
 
-/* Shared wrapper — controls width for both player and audio panel */
-.stream-wrapper {
+/* Outer centering wrapper */
+.stream-outer {
+    display: flex;
+    justify-content: center;
     width: 100%;
-    max-width: 70%;
-    margin: auto;
     padding: 5px;
     box-sizing: border-box;
 }
 
-/* For mobile devices */
+/* Inner column — player and panel are children, always identical width */
+.stream-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 70%;
+    box-sizing: border-box;
+}
+
 @media screen and (max-width: 1023px) {
-    .stream-wrapper { max-width: 100%; }
+    .stream-wrapper { width: 100%; }
 }
 
 /* Disable picture in picture button */
@@ -41,11 +48,16 @@ body {
 /* Hide built-in audio button — custom panel replaces it */
 #my-video .vjs-audio-button { display: none !important; }
 
-/* ── Ministry-style player ── */
+.player-wrap {
+    width: 100%;
+    position: relative;
+}
+
 .video-js {
     width: 100% !important;
     aspect-ratio: 16/9;
     height: auto !important;
+    display: block;
 }
 
 .video-js .vjs-big-play-button {
@@ -114,7 +126,6 @@ body {
 
 /* ── Audio language panel ── */
 .audio-panel {
-    width: 100%;
     margin-top: 16px;
     background: #1a1a20;
     border: 1px solid rgba(255,199,19,0.18);
@@ -163,7 +174,6 @@ body {
 
 /* Status bar */
 .status-bar {
-    width: 100%;
     margin-top: 10px;
     display: flex;
     justify-content: space-between;
@@ -193,7 +203,8 @@ body {
     <h2 style="text-align: center;">Multi-Lingual sports commentary - Live</h2>
     <br>
 
-    <div class="stream-wrapper">
+    <div class="stream-outer">
+      <div class="stream-wrapper">
         <div class="player-wrap">
             <div class="loading-overlay" id="loading-overlay">
                 <div class="spinner"></div>
@@ -216,6 +227,7 @@ body {
             <span id="status-text">Loading…</span>
             <span id="track-info"></span>
         </div>
+      </div>
     </div>
 
 <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
